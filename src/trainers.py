@@ -235,6 +235,7 @@ class ELECITY(Trainer):
             joint_avg_loss = 0.0
             gen_avg_loss = 0.0
             dis_avg_loss = 0.0
+            con_avg_loss = 0.0
             print(f"rec dataset length: {len(dataloader)}")
             rec_cf_data_iter = tqdm(enumerate(dataloader), total=len(dataloader))
 
@@ -284,9 +285,9 @@ class ELECITY(Trainer):
                 joint_loss.backward()
                 self.optim.step()
 
-                gen_avg_loss = gen_loss.item()
-                dis_avg_loss = dis_loss.item()
-                con_avg_loss = con_loss.item()
+                gen_avg_loss += gen_loss.item()
+                dis_avg_loss += dis_loss.item()
+                con_avg_loss += con_loss.item()
                 joint_avg_loss += joint_loss.item()
             # except:
             #     print("minor compute issue")
