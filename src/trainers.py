@@ -17,6 +17,18 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, RandomSampler
 
 from utils import recall_at_k, ndcg_k, get_metric, get_user_seqs
+class Similarity(nn.Module):
+    """
+    Dot product or cosine similarity
+    """
+
+    def __init__(self, temp):
+        super().__init__()
+        self.temp = temp
+        self.cos = nn.CosineSimilarity(dim=-1)
+
+    def forward(self, x, y):
+        return self.cos(x, y) / self.temp
 
 class Trainer:
     def __init__(self, generator,
@@ -51,6 +63,8 @@ class Trainer:
 
         self.m = nn.Softmax(dim=1)
         self.loss_fct = nn.CrossEntropyLoss()
+        self.con_sim = Similarity(temp=args.contras_loss_temp)
+        self.con_loss_fct = nn.CrossEntropyLoss()
 
     def train(self, epoch):
         self.epoch = epoch
@@ -171,7 +185,8 @@ class Trainer:
         if self.args.gen_loss_type in ['full-softmax']:
             test_item_emb = self.generator.item_embeddings.weight
             logits = torch.matmul(seq_emb, test_item_emb.transpose(0, 1))
-            loss = self.loss_fct(logits, torch.squeeze(pos_ids.view(-1))) 
+            pos_ids_l = torch.squeeze(pos_ids.view(-1))
+            loss = self.loss_fct(logits, pos_ids_l)
         return loss
 
     def predict_sample(self, seq_out, test_neg_sample):
@@ -246,6 +261,16 @@ class ELECITY(Trainer):
 
                 # ---------- generator task ---------------#
                 sequence_output = self.generator(input_ids)
+
+                # Contrastive loss
+                sequence_output_1 = self.generator(input_ids)
+                logits_0 = sequence_output.unsqueeze(2)
+                logits_1 = sequence_output_1.unsqueeze(1)
+                cos_sim = self.con_sim(logits_0, logits_1).view(-1, sequence_output_1.size(1))
+                labels = torch.arange(sequence_output_1.size(1)).long().to(self.device)
+                labels_n = labels.repeat(sequence_output_1.size(0))
+                con_loss = self.con_loss_fct(cos_sim, labels_n)
+
                 gen_loss = self.generator_cross_entropy(sequence_output, target_pos, target_neg)
 
                 # ---------- discriminator task -----------#
@@ -253,7 +278,7 @@ class ELECITY(Trainer):
                 disc_logits = self.discriminator(sampled_neg_ids)
                 dis_loss = self.discriminator_cross_entropy(disc_logits, pos_idx, neg_idx,  mask_idx, istarget)
                 
-                joint_loss = self.args.gen_loss_weight * gen_loss + self.args.dis_loss_weight * dis_loss
+                joint_loss = self.args.contras_loss_weight * con_loss + self.args.gen_loss_weight * gen_loss + self.args.dis_loss_weight * dis_loss
 
                 self.optim.zero_grad()
                 joint_loss.backward()

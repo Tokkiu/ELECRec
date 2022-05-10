@@ -47,7 +47,7 @@ def update_to_module_parameters(args, m_type='gen'):
 def main():
     parser = argparse.ArgumentParser()
     #system args
-    parser.add_argument('--data_dir', default='../../data/', type=str)
+    parser.add_argument('--data_dir', default='../data/', type=str)
     parser.add_argument('--output_dir', default='output/', type=str)
     parser.add_argument('--data_name', default='Beauty', type=str)
     parser.add_argument('--do_eval', action='store_true')
@@ -60,7 +60,7 @@ def main():
     parser.add_argument("--model_name", default='ELECRec', type=str)
 
     # Generator args
-    parser.add_argument("--gen_hidden_size", type=int, default=64, help="hidden size of transformer model")
+    parser.add_argument("--gen_hidden_size", type=int, default=8, help="hidden size of transformer model")
     parser.add_argument("--gen_num_hidden_layers", type=int, default=2, help="number of layers")
     parser.add_argument('--gen_num_attention_heads', default=2, type=int)
     parser.add_argument('--gen_hidden_act', default="gelu", type=str) # gelu relu
@@ -79,7 +79,7 @@ def main():
     parser.add_argument('--item_sample_ratio', default=1.0, type=float, help='sampled item ratio')
 
     # Discriminator args
-    parser.add_argument("--dis_hidden_size", type=int, default=64, help="hidden size of transformer model")
+    parser.add_argument("--dis_hidden_size", type=int, default=8, help="hidden size of transformer model")
     parser.add_argument("--dis_num_hidden_layers", type=int, default=2, help="number of layers")
     parser.add_argument('--dis_num_attention_heads', default=2, type=int)
     parser.add_argument('--dis_hidden_act', default="gelu", type=str) # gelu relu
@@ -93,9 +93,9 @@ def main():
                 help='sum, affine')
 
     # train args
-    parser.add_argument('--max_seq_length', default=50, type=int)
+    parser.add_argument('--max_seq_length', default=5, type=int)
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate of adam")
-    parser.add_argument("--batch_size", type=int, default=256, help="number of batch_size")
+    parser.add_argument("--batch_size", type=int, default=4, help="number of batch_size")
     parser.add_argument("--epochs", type=int, default=300, help="number of epochs")
     parser.add_argument("--no_cuda", action="store_true")
     parser.add_argument("--log_freq", type=int, default=1, help="per epoch print res")
@@ -111,6 +111,11 @@ def main():
     # negative sampling strategies
     parser.add_argument("--neg_numbers", type=int, default=1, help="number of negative items\
                          for next item prediction")
+
+    # contrastive learning
+    parser.add_argument("--contras_loss_weight", type=float, default=0.5)
+    parser.add_argument("--contras_loss_temp", type=float, default=0.05)
+
 
     
     args = parser.parse_args()
@@ -146,11 +151,11 @@ def main():
     args.checkpoint_path = os.path.join(args.output_dir, checkpoint)
 
     # training data 
-    cluster_dataset = ELECRecDataset(args, 
-                                    user_seq[:int(len(user_seq)*args.training_data_ratio)], \
-                                    data_type='train')
-    cluster_sampler = SequentialSampler(cluster_dataset)
-    cluster_dataloader = DataLoader(cluster_dataset, sampler=cluster_sampler, batch_size=args.batch_size)
+    # cluster_dataset = ELECRecDataset(args,
+    #                                 user_seq[:int(len(user_seq)*args.training_data_ratio)], \
+    #                                 data_type='train')
+    # cluster_sampler = SequentialSampler(cluster_dataset)
+    # cluster_dataloader = DataLoader(cluster_dataset, sampler=cluster_sampler, batch_size=args.batch_size)
 
     train_dataset = ELECRecDataset(args, 
                                     user_seq[:int(len(user_seq)*args.training_data_ratio)], \
