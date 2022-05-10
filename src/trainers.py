@@ -286,12 +286,14 @@ class ELECITY(Trainer):
 
                 gen_avg_loss = gen_loss.item()
                 dis_avg_loss = dis_loss.item()
+                con_avg_loss = con_loss.item()
                 joint_avg_loss += joint_loss.item()
             # except:
             #     print("minor compute issue")
 
             post_fix = {
                 "epoch": epoch,
+                "contrastive loss": '{:.4f}'.format(con_avg_loss / len(rec_cf_data_iter)),
                 "generator loss": '{:.4f}'.format(gen_avg_loss / len(rec_cf_data_iter)),
                 "discriminator loss": '{:.4f}'.format(dis_avg_loss / len(rec_cf_data_iter)),
                 "joint_avg_loss": '{:.4f}'.format(joint_avg_loss / len(rec_cf_data_iter)),
