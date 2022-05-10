@@ -60,7 +60,7 @@ def main():
     parser.add_argument("--model_name", default='ELECRec', type=str)
 
     # Generator args
-    parser.add_argument("--gen_hidden_size", type=int, default=8, help="hidden size of transformer model")
+    parser.add_argument("--gen_hidden_size", type=int, default=64, help="hidden size of transformer model")
     parser.add_argument("--gen_num_hidden_layers", type=int, default=2, help="number of layers")
     parser.add_argument('--gen_num_attention_heads', default=2, type=int)
     parser.add_argument('--gen_hidden_act', default="gelu", type=str) # gelu relu
@@ -79,7 +79,7 @@ def main():
     parser.add_argument('--item_sample_ratio', default=1.0, type=float, help='sampled item ratio')
 
     # Discriminator args
-    parser.add_argument("--dis_hidden_size", type=int, default=8, help="hidden size of transformer model")
+    parser.add_argument("--dis_hidden_size", type=int, default=64, help="hidden size of transformer model")
     parser.add_argument("--dis_num_hidden_layers", type=int, default=2, help="number of layers")
     parser.add_argument('--dis_num_attention_heads', default=2, type=int)
     parser.add_argument('--dis_hidden_act', default="gelu", type=str) # gelu relu
@@ -93,9 +93,9 @@ def main():
                 help='sum, affine')
 
     # train args
-    parser.add_argument('--max_seq_length', default=5, type=int)
+    parser.add_argument('--max_seq_length', default=50, type=int)
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate of adam")
-    parser.add_argument("--batch_size", type=int, default=4, help="number of batch_size")
+    parser.add_argument("--batch_size", type=int, default=256, help="number of batch_size")
     parser.add_argument("--epochs", type=int, default=300, help="number of epochs")
     parser.add_argument("--no_cuda", action="store_true")
     parser.add_argument("--log_freq", type=int, default=1, help="per epoch print res")
