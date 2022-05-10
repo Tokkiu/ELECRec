@@ -265,10 +265,12 @@ class ELECITY(Trainer):
 
                 # Contrastive loss
                 sequence_output_1 = self.generator(input_ids)
-                logits_0 = sequence_output[:, -1, :].squeeze(1).unsqueeze(1)
-                logits_1 = sequence_output_1[:, -1, :].squeeze(1).unsqueeze(0)
-                cos_sim = self.con_sim(logits_0, logits_1).view(-1, sequence_output_1.size(0))
-                labels = torch.arange(sequence_output_1.size(0)).long().to(self.device)
+                # logits_0 = sequence_output[:, -1, :].squeeze(1).unsqueeze(1)
+                # logits_1 = sequence_output_1[:, -1, :].squeeze(1).unsqueeze(0)
+                logits_0 = sequence_output.view(-1, sequence_output.size(-1)).unsqueeze(1)
+                logits_1 = sequence_output_1.view(-1, sequence_output.size(-1)).unsqueeze(0)
+                cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
+                labels = torch.arange(logits_0.size(0)).long().to(self.device)
                 # labels_n = labels.repeat(sequence_output_1.size(0))
                 con_loss = self.con_loss_fct(cos_sim, labels)
 
