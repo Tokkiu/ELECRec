@@ -17,8 +17,6 @@ from operator import itemgetter
 
 import torch
 import torch.nn as nn
-import gensim
-import faiss
 # from kmeans_pytorch import kmeans
 import time
 
