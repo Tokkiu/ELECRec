@@ -270,11 +270,14 @@ class ELECITY(Trainer):
 
                 con_loss = 0
 
+                # self.args.contras_target = 'interk'
+                # self.args.contras_k = 3
+
                 # use all seq hidden to calculate con loss
                 if self.args.contras_target == 'all':
                     k = self.args.contras_k
-                    logits_0 = sequence_output[:, -k:, :].view(-1, sequence_output.size(-1)).unsqueeze(1)
-                    logits_1 = sequence_output_1[:, -k:, :].view(-1, sequence_output.size(-1)).unsqueeze(0)
+                    logits_0 = sequence_output[:, -k:, :].reshape(-1, sequence_output.size(-1)).unsqueeze(1)
+                    logits_1 = sequence_output_1[:, -k:, :].reshape(-1, sequence_output.size(-1)).unsqueeze(0)
                     cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
                     labels = torch.arange(logits_0.size(0)).long().to(self.device)
                     con_loss = self.con_loss_fct(cos_sim, labels)
