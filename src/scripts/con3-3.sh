@@ -1,0 +1,8 @@
+
+
+nohup python3 main.py --gpu_id $g --model_idx 12  --exp 3 --data_name Beauty --contras_target avgk --contras_k 8 --contras_loss_weight 0.01  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/12.log 2>&1
+nohup python3 main.py --gpu_id $g --model_idx 13  --exp 3 --data_name Beauty --contras_target avgk --contras_k 8 --contras_loss_weight 0.02  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/13.log 2>&1
+nohup python3 main.py --gpu_id $g --model_idx 14  --exp 3 --data_name Beauty --contras_target avgk --contras_k 8 --contras_loss_weight 0.05  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/14.log 2>&1
+nohup python3 main.py --gpu_id $g --model_idx 15  --exp 3 --data_name Beauty --contras_target avgk --contras_k 8 --contras_loss_weight 0.1  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/15.log 2>&1
+nohup python3 main.py --gpu_id $g --model_idx 16  --exp 3 --data_name Beauty --contras_target avgk --contras_k 10 --contras_loss_weight 0.01  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/16.log 2>&1
+nohup python3 main.py --gpu_id $g --model_idx 17  --exp 3 --data_name Beauty --contras_target avgk --contras_k 10 --contras_loss_weight 0.02  --gen_loss_type full-softmax --gen_loss_weight 1.0   --model_shared_type full --gen_attention_probs_dropout_prob 0.2  > con3/17.log 2>&1
