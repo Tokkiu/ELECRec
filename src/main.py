@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--data_name', default='Beauty', type=str)
     parser.add_argument('--do_eval', action='store_true')
     parser.add_argument('--model_idx', default=0, type=int, help="model idenfier 10, 20, 30...")
+    parser.add_argument('--exp', default='0', type=str, help="exp id")
     parser.add_argument("--gpu_id", type=str, default="0", help="gpu_id")
     parser.add_argument('--training_data_ratio', default=1.0, type=float, \
                         help="percentage of training samples used for training - robustness analysis")
@@ -137,7 +138,7 @@ def main():
     args.mask_id = max_item + 1
 
     # save model args
-    args_str = f'{args.model_name}-{args.data_name}-{args.model_idx}'
+    args_str = f'{args.model_name}-{args.data_name}-{args.exp}-{args.model_idx}'
     args.log_file = os.path.join(args.output_dir, args_str + '.txt')
 
     show_args_info(args)
