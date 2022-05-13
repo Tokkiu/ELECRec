@@ -150,7 +150,7 @@ class Trainer:
 
     def discriminator_cross_entropy(self, seq_out, pos_idx, neg_idx, mask_idx, istarget):
         seq_emb = seq_out.view(-1, self.args.hidden_size)
-        # sum over feature dim
+        # sum over feature di  m
         if self.args.project_type == 'sum':
             neg_logits = torch.sum((seq_emb)/self.args.temperature, -1)
         elif self.args.project_type == 'affine':
@@ -267,28 +267,71 @@ class ELECITY(Trainer):
                 sequence_output_1 = self.generator(input_ids)
                 # logits_0 = sequence_output[:, -1, :].squeeze(1).unsqueeze(1)
                 # logits_1 = sequence_output_1[:, -1, :].squeeze(1).unsqueeze(0)
-                logits_0 = sequence_output.view(-1, sequence_output.size(-1)).unsqueeze(1)
-                logits_1 = sequence_output_1.view(-1, sequence_output.size(-1)).unsqueeze(0)
-                cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
-                labels = torch.arange(logits_0.size(0)).long().to(self.device)
-                # labels_n = labels.repeat(sequence_output_1.size(0))
-                con_loss = self.con_loss_fct(cos_sim, labels)
+
+                con_loss = 0
+
+                # use all seq hidden to calculate con loss
+                if self.args.contras_target == 'all':
+                    k = self.args.contras_k
+                    logits_0 = sequence_output[:, -k:, :].view(-1, sequence_output.size(-1)).unsqueeze(1)
+                    logits_1 = sequence_output_1[:, -k:, :].view(-1, sequence_output.size(-1)).unsqueeze(0)
+                    cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
+                    labels = torch.arange(logits_0.size(0)).long().to(self.device)
+                    con_loss = self.con_loss_fct(cos_sim, labels)
+
+                # use avg seq hidden to calculate con loss
+                if self.args.contras_target == 'avg':
+                    logits_0 = sequence_output.mean(dim=1).unsqueeze(1)
+                    logits_1 = sequence_output_1.mean(dim=1).unsqueeze(0)
+                    cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
+                    labels = torch.arange(logits_0.size(0)).long().to(self.device)
+                    con_loss = self.con_loss_fct(cos_sim, labels)
+
+                # use lask k avg seq hidden to calculate con loss
+                if self.args.contras_target == 'avgk':
+                    k = self.args.contras_k
+                    logits_0 = sequence_output[:, -k:, :].mean(dim=1).unsqueeze(1)
+                    logits_1 = sequence_output_1[:, -k:, :].mean(dim=1).unsqueeze(0)
+                    cos_sim = self.con_sim(logits_0, logits_1).view(-1, logits_0.size(0))
+                    labels = torch.arange(logits_0.size(0)).long().to(self.device)
+                    con_loss = self.con_loss_fct(cos_sim, labels)
+
+                # use inter seq hidden for each position to calculate con loss
+                if self.args.contras_target == 'inter':
+                    logits_0 = sequence_output.transpose(0,1).unsqueeze(2)
+                    logits_1 = sequence_output_1.transpose(0,1).unsqueeze(1)
+                    cos_sim = self.con_sim(logits_0, logits_1).view(-1, sequence_output.size(0))
+                    labels = torch.arange(sequence_output.size(0)).long().to(self.device)
+                    labels_n = labels.repeat(sequence_output.size(1))
+                    con_loss = self.con_loss_fct(cos_sim, labels_n)
+
+                if self.args.contras_target == 'interk':
+                    k = self.args.contras_k
+                    logits_0 = sequence_output[:, -k:, :].transpose(0,1).unsqueeze(2)
+                    logits_1 = sequence_output_1[:, -k:, :].transpose(0,1).unsqueeze(1)
+                    cos_sim = self.con_sim(logits_0, logits_1).view(-1, sequence_output.size(0))
+                    labels = torch.arange(sequence_output.size(0)).long().to(self.device)
+                    labels_n = labels.repeat(k)
+                    con_loss = self.con_loss_fct(cos_sim, labels_n)
+
+
 
                 gen_loss = self.generator_cross_entropy(sequence_output, target_pos, target_neg)
+                joint_loss = self.args.contras_loss_weight * con_loss + self.args.gen_loss_weight * gen_loss
 
                 # ---------- discriminator task -----------#
-                sampled_neg_ids, pos_idx, neg_idx, mask_idx, istarget = self.sample_from_generator(sequence_output, target_pos)
-                disc_logits = self.discriminator(sampled_neg_ids)
-                dis_loss = self.discriminator_cross_entropy(disc_logits, pos_idx, neg_idx,  mask_idx, istarget)
-                
-                joint_loss = self.args.contras_loss_weight * con_loss + self.args.gen_loss_weight * gen_loss + self.args.dis_loss_weight * dis_loss
+                # sampled_neg_ids, pos_idx, neg_idx, mask_idx, istarget = self.sample_from_generator(sequence_output, target_pos)
+                # disc_logits = self.discriminator(sampled_neg_ids)
+                # dis_loss = self.discriminator_cross_entropy(disc_logits, pos_idx, neg_idx,  mask_idx, istarget)
+                #
+                # joint_loss = self.args.contras_loss_weight * con_loss + self.args.gen_loss_weight * gen_loss + self.args.dis_loss_weight * dis_loss
 
                 self.optim.zero_grad()
                 joint_loss.backward()
                 self.optim.step()
 
                 gen_avg_loss += gen_loss.item()
-                dis_avg_loss += dis_loss.item()
+                # dis_avg_loss += dis_loss.item()
                 con_avg_loss += con_loss.item()
                 joint_avg_loss += joint_loss.item()
             # except:
@@ -298,7 +341,7 @@ class ELECITY(Trainer):
                 "epoch": epoch,
                 "contrastive loss": '{:.4f}'.format(con_avg_loss / len(rec_cf_data_iter)),
                 "generator loss": '{:.4f}'.format(gen_avg_loss / len(rec_cf_data_iter)),
-                "discriminator loss": '{:.4f}'.format(dis_avg_loss / len(rec_cf_data_iter)),
+                # "discriminator loss": '{:.4f}'.format(dis_avg_loss / len(rec_cf_data_iter)),
                 "joint_avg_loss": '{:.4f}'.format(joint_avg_loss / len(rec_cf_data_iter)),
             }
             if (epoch + 1) % self.args.log_freq == 0:

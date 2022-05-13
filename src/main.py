@@ -115,6 +115,8 @@ def main():
     # contrastive learning
     parser.add_argument("--contras_loss_weight", type=float, default=0.5)
     parser.add_argument("--contras_loss_temp", type=float, default=0.05)
+    parser.add_argument("--contras_target", type=str, default='avg')
+    parser.add_argument("--contras_k", type=int, default=5)
 
 
     
